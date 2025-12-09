@@ -8,6 +8,7 @@ class CGFQuizApp {
         this.endTime = null;
         this.selectedCategory = 'all';
         this.filteredQuestions = [];
+        this.quizStarted = false;
         
         this.init();
     }
@@ -23,7 +24,7 @@ class CGFQuizApp {
         this.setupEventListeners();
         
         // Initialize interfaces
-        this.initializeQuiz();
+        this.setupQuizInterface();
         this.loadAdminDashboard();
         
         // Update sync status
@@ -43,19 +44,27 @@ class CGFQuizApp {
         });
 
         // Quiz controls
+        const startQuizBtn = document.getElementById('startQuizBtn');
         const nextBtn = document.getElementById('nextBtn');
         const prevBtn = document.getElementById('prevBtn');
         const submitBtn = document.getElementById('submitBtn');
         const retakeBtn = document.getElementById('retakeBtn');
         const viewHistoryBtn = document.getElementById('viewHistoryBtn');
         const addQuestionBtn = document.getElementById('addQuestionBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
 
+        if (startQuizBtn) startQuizBtn.addEventListener('click', () => this.startQuiz());
         if (nextBtn) nextBtn.addEventListener('click', () => this.nextQuestion());
         if (prevBtn) prevBtn.addEventListener('click', () => this.prevQuestion());
         if (submitBtn) submitBtn.addEventListener('click', () => this.submitQuiz());
         if (retakeBtn) retakeBtn.addEventListener('click', () => this.retakeQuiz());
         if (viewHistoryBtn) viewHistoryBtn.addEventListener('click', () => this.viewHistory());
         if (addQuestionBtn) addQuestionBtn.addEventListener('click', () => this.addQuestion());
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportQuestions());
+        if (importBtn) importBtn.addEventListener('click', () => this.importQuestions());
+        if (clearAllBtn) clearAllBtn.addEventListener('click', () => this.clearAllData());
     }
 
     switchInterface(interfaceName) {
@@ -86,7 +95,7 @@ class CGFQuizApp {
         } else if (interfaceName === 'results-interface') {
             this.displayLatestResult();
         } else if (interfaceName === 'quiz-interface') {
-            this.initializeQuiz();
+            this.setupQuizInterface();
         }
     }
 
@@ -276,24 +285,74 @@ class CGFQuizApp {
         ];
     }
 
-    initializeQuiz() {
-        if (this.questions.length === 0) {
-            this.showMessage('No questions available. Please add questions in the Admin panel.', 'error');
-            return;
+    setupQuizInterface() {
+        this.quizStarted = false;
+        
+        // Populate category selector
+        const categorySelect = document.getElementById('quizCategorySelect');
+        if (categorySelect) {
+            const categories = this.getCategories();
+            categorySelect.innerHTML = '';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat === 'all' ? 'All Categories' : cat;
+                categorySelect.appendChild(option);
+            });
         }
 
-        // Filter questions by selected category
+        // Reset question display
+        const questionText = document.getElementById('questionText');
+        if (questionText) {
+            questionText.textContent = 'Select a category and click "Start Quiz" to begin...';
+        }
+
+        const answersContainer = document.getElementById('answersContainer');
+        if (answersContainer) {
+            answersContainer.innerHTML = '';
+        }
+
+        // Hide navigation buttons
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (submitBtn) submitBtn.style.display = 'none';
+    }
+
+    startQuiz() {
+        const categorySelect = document.getElementById('quizCategorySelect');
+        if (categorySelect) {
+            this.selectedCategory = categorySelect.value;
+        }
+
         this.filteredQuestions = this.filterQuestionsByCategory(this.selectedCategory);
         
         if (this.filteredQuestions.length === 0) {
-            this.showMessage('No questions in this category.', 'error');
+            this.showMessage('No questions available in this category.', 'error');
             return;
         }
 
+        this.quizStarted = true;
         this.currentQuestionIndex = 0;
         this.userAnswers = new Array(this.filteredQuestions.length).fill(null);
         this.startTime = new Date();
         this.endTime = null;
+
+        // Hide category selector
+        const categorySelector = document.querySelector('.category-selector');
+        if (categorySelector) {
+            categorySelector.style.display = 'none';
+        }
+
+        // Show navigation buttons
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        if (prevBtn) prevBtn.style.display = 'inline-block';
+        if (nextBtn) nextBtn.style.display = 'inline-block';
 
         this.displayQuestion();
         this.updateProgress();
@@ -303,10 +362,12 @@ class CGFQuizApp {
         if (totalQuestionsEl) {
             totalQuestionsEl.textContent = this.filteredQuestions.length;
         }
+
+        this.showMessage(`Quiz started! ${this.filteredQuestions.length} questions in ${this.selectedCategory === 'all' ? 'all categories' : this.selectedCategory}`, 'info');
     }
 
     displayQuestion() {
-        if (this.filteredQuestions.length === 0) return;
+        if (this.filteredQuestions.length === 0 || !this.quizStarted) return;
 
         const question = this.filteredQuestions[this.currentQuestionIndex];
         const questionTextEl = document.getElementById('questionText');
@@ -429,6 +490,7 @@ class CGFQuizApp {
 
         // Show results
         this.displayResult(result);
+        this.displayQuestionReview(result);
         this.switchInterface('results-interface');
         
         this.showMessage(`Quiz completed! Score: ${score}/${totalQuestions} (${percentage}%)`, 'success');
@@ -439,17 +501,55 @@ class CGFQuizApp {
         const scoreTextEl = document.getElementById('scoreText');
         const timeTextEl = document.getElementById('timeText');
         const dateTextEl = document.getElementById('dateText');
+        const categoryTextEl = document.getElementById('categoryText');
 
         if (scorePercentageEl) scorePercentageEl.textContent = `${result.percentage}%`;
         if (scoreTextEl) scoreTextEl.textContent = `${result.score}/${result.total}`;
         if (timeTextEl) timeTextEl.textContent = this.formatDuration(result.duration);
         if (dateTextEl) dateTextEl.textContent = new Date(result.date).toLocaleDateString();
+        if (categoryTextEl) categoryTextEl.textContent = result.category === 'all' ? 'All Categories' : result.category;
+
+        // Update score circle color based on percentage
+        const scoreCircle = document.querySelector('.score-circle');
+        if (scoreCircle) {
+            scoreCircle.classList.remove('low-score', 'medium-score');
+            if (result.percentage < 60) {
+                scoreCircle.classList.add('low-score');
+            } else if (result.percentage < 80) {
+                scoreCircle.classList.add('medium-score');
+            }
+        }
+    }
+
+    displayQuestionReview(result) {
+        const reviewContainer = document.getElementById('questionReview');
+        if (!reviewContainer) return;
+
+        reviewContainer.innerHTML = '';
+
+        result.questions.forEach((question, index) => {
+            const userAnswer = result.answers[index];
+            const isCorrect = userAnswer === question.correct;
+
+            const reviewItem = document.createElement('div');
+            reviewItem.className = `question-review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+            
+            reviewItem.innerHTML = `
+                <h4>${isCorrect ? '✅' : '❌'} Question ${index + 1}: [${question.category}]</h4>
+                <p><strong>${question.text}</strong></p>
+                <p>Your answer: ${userAnswer !== null ? question.answers[userAnswer] : 'Not answered'}</p>
+                <p>Correct answer: ${question.answers[question.correct]}</p>
+            `;
+
+            reviewContainer.appendChild(reviewItem);
+        });
     }
 
     displayLatestResult() {
         if (this.results.length > 0) {
             const latestResult = this.results[this.results.length - 1];
             this.displayResult(latestResult);
+            this.displayQuestionReview(latestResult);
         }
     }
 
@@ -460,14 +560,14 @@ class CGFQuizApp {
     }
 
     retakeQuiz() {
-        this.initializeQuiz();
+        this.setupQuizInterface();
         this.switchInterface('quiz-interface');
     }
 
     viewHistory() {
-        console.log('Quiz History:', this.results);
-        this.showMessage(`You have completed ${this.results.length} quizzes`, 'info');
+        this.switchInterface('admin-interface');
         this.loadAdminDashboard();
+        this.showMessage(`Viewing quiz history: ${this.results.length} completed quizzes`, 'info');
     }
 
     async addQuestion() {
@@ -546,6 +646,7 @@ class CGFQuizApp {
         select.style.width = 'auto';
         select.style.display = 'inline-block';
         select.style.marginLeft = '10px';
+        select.style.marginBottom = '0';
         
         categories.forEach(cat => {
             const option = document.createElement('option');
@@ -569,10 +670,18 @@ class CGFQuizApp {
         const container = document.getElementById('resultsTable');
         if (!container) return;
         
+        // Keep the header
+        const header = container.querySelector('.table-header');
         container.innerHTML = '';
+        if (header) {
+            container.appendChild(header);
+        }
 
         if (this.results.length === 0) {
-            container.innerHTML = '<p>No quiz results yet.</p>';
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'table-row';
+            emptyRow.innerHTML = '<p style="text-align: center; width: 100%;">No quiz results yet.</p>';
+            container.appendChild(emptyRow);
             return;
         }
 
@@ -581,7 +690,7 @@ class CGFQuizApp {
             row.className = 'table-row';
             row.innerHTML = `
                 <span>${new Date(result.date).toLocaleDateString()}</span>
-                <span>${result.category || 'All'}</span>
+                <span>${result.category === 'all' ? 'All' : result.category}</span>
                 <span>${result.score}/${result.total} (${result.percentage}%)</span>
                 <span>${this.formatDuration(result.duration)}</span>
             `;
@@ -613,7 +722,7 @@ class CGFQuizApp {
             item.className = 'question-item';
             item.innerHTML = `
                 <div>
-                    <strong>[${question.category}]</strong> ${question.text.substring(0, 50)}${question.text.length > 50 ? '...' : ''}
+                    <strong>[${question.category}]</strong> ${question.text.substring(0, 80)}${question.text.length > 80 ? '...' : ''}
                 </div>
                 <button class="btn btn-secondary btn-delete" data-index="${questionIndex}">Delete</button>
             `;
@@ -637,6 +746,79 @@ class CGFQuizApp {
             this.loadAdminDashboard();
             this.showMessage('Question deleted successfully!', 'success');
         }
+    }
+
+    exportQuestions() {
+        const dataStr = JSON.stringify(this.questions, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `cgf-quiz-questions-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.showMessage('Questions exported successfully!', 'success');
+    }
+
+    importQuestions() {
+        const input = document.getElementById('importFile');
+        if (!input) return;
+
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const importedQuestions = JSON.parse(text);
+
+                if (!Array.isArray(importedQuestions)) {
+                    throw new Error('Invalid format: expected an array of questions');
+                }
+
+                // Validate questions
+                importedQuestions.forEach((q, index) => {
+                    if (!q.text || !q.answers || !Array.isArray(q.answers) || typeof q.correct !== 'number') {
+                        throw new Error(`Invalid question format at index ${index}`);
+                    }
+                });
+
+                // Merge with existing questions
+                const confirm = window.confirm(`Import ${importedQuestions.length} questions? This will add to your existing questions.`);
+                if (confirm) {
+                    this.questions = [...this.questions, ...importedQuestions];
+                    await this.saveQuestions();
+                    this.loadAdminDashboard();
+                    this.showMessage(`Successfully imported ${importedQuestions.length} questions!`, 'success');
+                }
+            } catch (error) {
+                this.showMessage(`Import failed: ${error.message}`, 'error');
+            }
+
+            input.value = '';
+        };
+
+        input.click();
+    }
+
+    async clearAllData() {
+        const confirm = window.confirm('Are you sure you want to clear ALL data? This will delete all questions and results. This action cannot be undone!');
+        if (!confirm) return;
+
+        const doubleConfirm = window.confirm('This is your last chance! Are you ABSOLUTELY sure?');
+        if (!doubleConfirm) return;
+
+        localStorage.removeItem('cgf-quiz-questions');
+        localStorage.removeItem('cgf-quiz-results');
+        
+        this.questions = this.getDefaultQuestions();
+        this.results = [];
+        
+        await this.saveQuestions();
+        await this.saveResults();
+        
+        this.loadAdminDashboard();
+        this.showMessage('All data cleared! Default questions restored.', 'info');
     }
 
     showMessage(text, type = 'info') {
