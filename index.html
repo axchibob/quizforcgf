@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGF Security Training Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ CGF Security Training Quiz</h1>
+            <div class="sync-status" id="syncStatus">
+                <span class="status-indicator" id="statusIndicator">🔄</span>
+                <span id="statusText">Initializing...</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Quiz Interface -->
+            <div id="quiz-interface" class="interface active">
+                <div class="quiz-header">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="question-counter">
+                        Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <h2 id="questionText">Loading questions...</h2>
+                    <div id="answersContainer" class="answers-container"></div>
+                </div>
+
+                <div class="quiz-controls">
+                    <button id="prevBtn" class="btn btn-secondary" disabled>Previous</button>
+                    <button id="nextBtn" class="btn btn-primary">Next</button>
+                    <button id="submitBtn" class="btn btn-success" style="display: none;">Submit Quiz</button>
+                </div>
+            </div>
+
+            <!-- Results Interface -->
+            <div id="results-interface" class="interface">
+                <div class="results-summary">
+                    <h2>Quiz Results</h2>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <span id="scorePercentage">0%</span>
+                        </div>
+                        <div class="score-details">
+                            <p>Score: <span id="scoreText">0/0</span></p>
+                            <p>Time: <span id="timeText">0:00</span></p>
+                            <p>Date: <span id="dateText">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-actions">
+                    <button id="retakeBtn" class="btn btn-primary">Retake Quiz</button>
+                    <button id="viewHistoryBtn" class="btn btn-secondary">View History</button>
+                </div>
+            </div>
+
+            <!-- Admin Interface -->
+            <div id="admin-interface" class="interface">
+                <h2>Admin Dashboard</h2>
+                
+                <div class="admin-section">
+                    <h3>Question Management</h3>
+                    <div class="question-form">
+                        <input type="text" id="newQuestionText" placeholder="Question text" class="form-input">
+                        <div id="answersForm" class="answers-form">
+                            <div class="answer-input">
+                                <input type="text" placeholder="Answer 1" class="form-input answer-text">
+                                <label><input type="radio" name="correctAnswer" value="0"> Correct</label>
+                            </div>
+                            <div class="answer-input">
+                                <input type="text" placeholder="Answer 2" class="form-input answer-text">
+                                <label><input type="radio" name="correctAnswer" value="1"> Correct</label>
+                            </div>
+                            <div class="answer-input">
+                                <input type="text" placeholder="Answer 3" class="form-input answer-text">
+                                <label><input type="radio" name="correctAnswer" value="2"> Correct</label>
+                            </div>
+                            <div class="answer-input">
+                                <input type="text" placeholder="Answer 4" class="form-input answer-text">
+                                <label><input type="radio" name="correctAnswer" value="3"> Correct</label>
+                            </div>
+                        </div>
+                        <button id="addQuestionBtn" class="btn btn-success">Add Question</button>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Results Overview</h3>
+                    <div id="resultsTable" class="results-table"></div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Questions List</h3>
+                    <div id="questionsList" class="questions-list"></div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-interface="quiz-interface">📝 Quiz</button>
+            <button class="nav-btn" data-interface="results-interface">📊 Results</button>
+            <button class="nav-btn" data-interface="admin-interface">⚙️ Admin</button>
+        </nav>
+
+        <div id="messageContainer" class="message-container"></div>
+    </div>
+
+    <script src="quiz-app.js"></script>
+</body>
+</html>
