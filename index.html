@@ -20,6 +20,14 @@
             <!-- Quiz Interface -->
             <div id="quiz-interface" class="interface active">
                 <div class="quiz-header">
+                    <div class="category-selector">
+                        <label for="quizCategorySelect">Select Category:</label>
+                        <select id="quizCategorySelect" class="form-input category-select">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <button id="startQuizBtn" class="btn btn-primary">Start Quiz</button>
+                    </div>
+                    
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
@@ -29,7 +37,7 @@
                 </div>
 
                 <div class="question-container">
-                    <h2 id="questionText">Loading questions...</h2>
+                    <h2 id="questionText">Select a category and click "Start Quiz" to begin...</h2>
                     <div id="answersContainer" class="answers-container"></div>
                 </div>
 
@@ -52,6 +60,7 @@
                             <p>Score: <span id="scoreText">0/0</span></p>
                             <p>Time: <span id="timeText">0:00</span></p>
                             <p>Date: <span id="dateText">-</span></p>
+                            <p>Category: <span id="categoryText">-</span></p>
                         </div>
                     </div>
                 </div>
@@ -59,6 +68,11 @@
                 <div class="results-actions">
                     <button id="retakeBtn" class="btn btn-primary">Retake Quiz</button>
                     <button id="viewHistoryBtn" class="btn btn-secondary">View History</button>
+                </div>
+
+                <div class="detailed-results" id="detailedResults">
+                    <h3>Question Review</h3>
+                    <div id="questionReview"></div>
                 </div>
             </div>
 
@@ -70,6 +84,7 @@
                     <h3>Question Management</h3>
                     <div class="question-form">
                         <input type="text" id="newQuestionText" placeholder="Question text" class="form-input">
+                        <input type="text" id="newQuestionCategory" placeholder="Category (e.g., Site Repairs, CGF Management)" class="form-input">
                         <div id="answersForm" class="answers-form">
                             <div class="answer-input">
                                 <input type="text" placeholder="Answer 1" class="form-input answer-text">
@@ -94,25 +109,22 @@
 
                 <div class="admin-section">
                     <h3>Results Overview</h3>
-                    <div id="resultsTable" class="results-table"></div>
+                    <div id="resultsTable" class="results-table">
+                        <div class="table-header">
+                            <span><strong>Date</strong></span>
+                            <span><strong>Category</strong></span>
+                            <span><strong>Score</strong></span>
+                            <span><strong>Time</strong></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="admin-section">
-                    <h3>Questions List</h3>
+                    <h3>Questions Management</h3>
+                    <div id="categoryFilter" class="category-filter"></div>
                     <div id="questionsList" class="questions-list"></div>
                 </div>
-            </div>
-        </main>
 
-        <nav class="bottom-nav">
-            <button class="nav-btn active" data-interface="quiz-interface">📝 Quiz</button>
-            <button class="nav-btn" data-interface="results-interface">📊 Results</button>
-            <button class="nav-btn" data-interface="admin-interface">⚙️ Admin</button>
-        </nav>
-
-        <div id="messageContainer" class="message-container"></div>
-    </div>
-
-    <script src="quiz-app.js"></script>
-</body>
-</html>
+                <div class="admin-section">
+                    <h3>Import/Export</h3>
+                
